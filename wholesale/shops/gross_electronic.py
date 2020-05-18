@@ -28,6 +28,18 @@ def get_login_action_url(login_html):
     return urljoin(base_url, login_form["action"])
 
 
+def get_login_redirect_url(login_form_response):
+    """
+    After login, a client side redirect is performed using javascript.
+    This function parses the Javascript to get the url to redirect to.
+    """
+
+    url_finder = re.compile(".*'(?P<url>.*)'.*")
+    match = re.match(url_finder, login_form_response)
+    redirect_url = urljoin(base_url, match.group("url"))
+    return redirect_url
+
+
 class GrossElectronic:
     def __init__(self, username, password):
         self.username = username
@@ -47,7 +59,12 @@ class GrossElectronic:
 
         return res.text
 
-    def login(self, login_html):
+    def send_login_form(self, login_html):
+        """
+        Sends the login form. Returns the response text which contains a Javascript
+        client side redirect.
+        """
+
         hidden_field_data = get_hidden_login_field_data(login_html)
         request_body = {
             **hidden_field_data,
@@ -62,22 +79,22 @@ class GrossElectronic:
 
         if not res.ok:
             raise Exception(
-                f"Could not login at url {url}. "
+                f"Could not send login form to {url}. "
                 f"Status code: {res.status_code}, reason: {res.reason}"
             )
 
-        # The website performs a client side redirect using Javascript.
-        # Simulate this by parsing the target url using a regular expression.
+        return res.text
 
-        url_finder = re.compile(".*'(?P<url>.*)'.*")
-        match = re.match(url_finder, res.text)
-        target_url = urljoin(base_url, match.group("url"))
+    def get_after_login_html(self, login_redirect_url):
+        """
+        Given the redirect url, this method retrieves the html of the after login page.
+        """
 
-        res = self.request_session.get(target_url, headers=self.default_headers)
+        res = self.request_session.get(login_redirect_url, headers=self.default_headers)
 
         if not res.ok:
             raise Exception(
-                f"Error after login redirect to {url}. "
+                f"Error while getting after login html from {login_redirect_url}. "
                 f"Status code: {res.status_code}, reason: {res.reason}"
             )
 
