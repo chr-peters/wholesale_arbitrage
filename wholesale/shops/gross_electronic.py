@@ -5,9 +5,15 @@ from urllib.parse import urljoin
 import re
 import time
 import io
+import csv
+from decimal import Decimal
+from ..db import Session
+from ..db.models import ProductWholesale
+from .. import settings
 
 
 base_url = "https://www.gross-electronic.de/"
+shop_name = "gross-electronic.de"
 
 
 def get_hidden_login_field_data(login_html):
@@ -132,7 +138,7 @@ class GrossElectronic:
 
         return res.text
 
-    def get_csv_file(self):
+    def get_csv_string(self):
         login_html = self.get_response_text(base_url)
         time.sleep(1)
 
@@ -156,6 +162,39 @@ class GrossElectronic:
         csv_url = get_csv_url(export_html)
         time.sleep(1)
 
-        csv_file = self.get_response_text(csv_url)
+        csv_string = self.get_response_text(csv_url)
 
-        return io.StringIO(csv_file)
+        return csv_string
+
+
+def parse_csv(csv_file):
+    reader = csv.DictReader(csv_file, delimiter=";")
+    for cur_record in reader:
+        age_restriction = 0
+        try:
+            age_restriction = int(cur_record["USK/FSK"])
+        except ValueError:
+            pass
+        yield ProductWholesale(
+            shop_name=shop_name,
+            name=cur_record["Bezeichnung"],
+            ean=cur_record["EAN"],
+            price_net=Decimal(cur_record["Ihr Preis"]),
+            age_restriction=age_restriction,
+        )
+
+
+def update_database():
+    gross = GrossElectronic(
+        username=settings.GROSS_ELECTRONIC["USER"],
+        password=settings.GROSS_ELECTRONIC["PASSWORD"],
+    )
+    csv_string = gross.get_csv_string()
+    csv_file = io.StringIO(csv_string)
+
+    session = Session()
+    for cur_product in parse_csv(csv_file):
+        # TODO: Update if exists
+        session.add(cur_product)
+    session.commit()
+    session.close()
