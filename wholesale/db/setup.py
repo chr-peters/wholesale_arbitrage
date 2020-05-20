@@ -1,6 +1,6 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from ..settings import DATABASE_MYSQL
+from wholesale.settings import DATABASE_MYSQL
 
 connection_url = (
     f"mysql+pymysql://{DATABASE_MYSQL['USER']}:"

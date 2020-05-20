@@ -1,7 +1,7 @@
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, String, Numeric, TIMESTAMP
 from sqlalchemy.sql import func
-from . import engine
+from wholesale.db import engine
 
 Base = declarative_base()
 
@@ -21,9 +21,22 @@ class ProductWholesale(Base):
     timestamp_updated = Column(
         TIMESTAMP,
         server_default=func.current_timestamp(),
-        server_onupdate=func.current_timestamp(),
+        onupdate=func.current_timestamp(),
         nullable=False,
     )
+
+    def __eq__(self, other):
+        if not self.shopname == other.shop_name:
+            return False
+        if not self.name == other.name:
+            return False
+        if not self.ean == other.ean:
+            return False
+        if not self.price_net == other.price_net:  # Decimal check is ok
+            return False
+        if not self.age_restriction == other.age_restriction:
+            return False
+        return True
 
     def __repr__(self):
         return (
