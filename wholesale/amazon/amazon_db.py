@@ -20,7 +20,7 @@ def update_products(batch, session):
             old_product.price = cur_product.price
             old_product.fees = cur_product.fees
             old_product.category_id = cur_product.category_id
-            old_product.salesrank = cur_product.salesrank
+            old_product.sales_rank = cur_product.sales_rank
 
     session.commit()
 

@@ -60,6 +60,22 @@ def parse_asin(response_product):
     return response_product["Identifiers"]["MarketplaceASIN"]["ASIN"]["value"]
 
 
+def parse_category_id(response_product):
+    try:
+        return response_product["SalesRankings"]["SalesRank"][0]["ProductCategoryId"][
+            "value"
+        ]
+    except (KeyError, IndexError) as e:
+        return None
+
+
+def parse_sales_rank(response_product):
+    try:
+        return int(response_product["SalesRankings"]["SalesRank"][0]["Rank"]["value"])
+    except (KeyError, IndexError) as e:
+        return None
+
+
 def is_bundle(response_product):
     if (
         response_product["AttributeSets"]["ItemAttributes"]["Binding"]["value"]
@@ -92,6 +108,8 @@ def parse_base_data(parsed_response):
         cur_product = ProductAmazon()
         cur_product.ean = ean
         cur_product.asin = parse_asin(cur_response_product)
+        cur_product.category_id = parse_category_id(cur_response_product)
+        cur_product.sales_rank = parse_sales_rank(cur_response_product)
         result.append(cur_product)
 
     return result

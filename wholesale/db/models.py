@@ -62,7 +62,7 @@ class ProductAmazon(Base):
     price = Column(Numeric(precision=8, scale=2))
     fees = Column(Numeric(precision=8, scale=2))
     category_id = Column(String(length=200))
-    salesrank = Column(Integer)
+    sales_rank = Column(Integer)
     timestamp_created = Column(
         TIMESTAMP, server_default=func.current_timestamp(), nullable=False
     )
@@ -84,7 +84,7 @@ class ProductAmazon(Base):
             return False
         if not self.category_id == other.category_id:
             return False
-        if not self.salesrank == other.salesrank:
+        if not self.sales_rank == other.sales_rank:
             return False
         return True
 
@@ -97,7 +97,7 @@ class ProductAmazon(Base):
             f"price={self.price}, "
             f"fees={self.fees}, "
             f"category_id='{self.category_id}', "
-            f"salesrank={self.salesrank}, "
+            f"salesrank={self.sales_rank}, "
             f"timestamp_created={self.timestamp_created}, "
             f"timestamp_updated={self.timestamp_updated})"
         )
