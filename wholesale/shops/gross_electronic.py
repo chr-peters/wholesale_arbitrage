@@ -262,7 +262,7 @@ def update_database():
         )
         if old_product is None:
             session.add(cur_product)
-        else:
+        elif cur_product != old_product:
             old_product.name = cur_product.name
             old_product.price_net = cur_product.price_net
             old_product.age_restriction = cur_product.age_restriction

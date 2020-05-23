@@ -59,7 +59,7 @@ class ProductAmazon(Base):
     id = Column(Integer, primary_key=True)
     ean = Column(String(length=13), nullable=False)
     asin = Column(String(length=20), nullable=False)
-    price = Column(Numeric(precision=8, scale=2), nullable=False)
+    price = Column(Numeric(precision=8, scale=2))
     fees = Column(Numeric(precision=8, scale=2))
     category_id = Column(String(length=200))
     salesrank = Column(Integer)
@@ -99,7 +99,7 @@ class ProductAmazon(Base):
             f"category_id='{self.category_id}', "
             f"salesrank={self.salesrank}, "
             f"timestamp_created={self.timestamp_created}, "
-            f"timestamp_updated={self.timestamp_updated}"
+            f"timestamp_updated={self.timestamp_updated})"
         )
 
 
