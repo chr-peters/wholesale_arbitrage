@@ -61,6 +61,7 @@ class ProductAmazon(Base):
     asin = Column(String(length=20), nullable=False)
     price = Column(Numeric(precision=8, scale=2))
     fees = Column(Numeric(precision=8, scale=2))
+    offers = Column(Integer)
     category_id = Column(String(length=200))
     sales_rank = Column(Integer)
     timestamp_created = Column(
@@ -81,6 +82,8 @@ class ProductAmazon(Base):
         if not self.price == other.price:  # Decimal == check is ok
             return False
         if not self.fees == other.fees:
+            return False
+        if not self.offers == other.offers:
             return False
         if not self.category_id == other.category_id:
             return False

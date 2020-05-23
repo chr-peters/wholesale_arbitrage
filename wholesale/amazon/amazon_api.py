@@ -3,6 +3,7 @@ import logging
 import time
 from wholesale import settings
 from wholesale.db.models import ProductAmazon
+from decimal import Decimal
 
 products_api = mws.Products(
     settings.AMAZON_MWS["AWS_ACCESS_KEY_ID"],
@@ -15,9 +16,10 @@ products_api = mws.Products(
 marketplace_id_germany = "A1PA6795UKMFR9"
 
 last_matching_product_request_time = 0
+last_competitive_pricing_request_time = 0
 
 
-def make_api_request(request, retry_count, sleep_time=2):
+def make_api_request(request, retry_count=5, sleep_time=2):
     success = False
     last_request_time = 0
     while not success:
@@ -135,7 +137,7 @@ def get_base_data(batch, marketplace_id=marketplace_id_germany):
     if elapsed < 1:  # wait at least 1 seconds between requests
         time.sleep(1 - elapsed)
 
-    response = make_api_request(api_request, retry_count=5)
+    response = make_api_request(api_request)
     last_matching_product_request_time = time.time()
     if not response.response.ok:
         raise Exception(
@@ -156,3 +158,94 @@ def get_base_data(batch, marketplace_id=marketplace_id_germany):
         result_list.extend(cur_result)
 
     return result_list
+
+
+def get_price(parsed_response):
+    """Returns a dict with a single entry {ASIN: price}"""
+    try:
+        asin = parsed_response["ASIN"]["value"]
+    except KeyError:
+        return None
+    try:
+        listing_price = Decimal(
+            parsed_response["Product"]["CompetitivePricing"]["CompetitivePrices"][
+                "CompetitivePrice"
+            ]["Price"]["ListingPrice"]["Amount"]["value"]
+        )
+    except KeyError:
+        listing_price = 0
+    try:
+        shipping = Decimal(
+            parsed_response["Product"]["CompetitivePricing"]["CompetitivePrices"][
+                "CompetitivePrice"
+            ]["Price"]["Shipping"]["Amount"]["value"]
+        )
+    except KeyError:
+        shipping = 0
+    price = listing_price + shipping
+    return {asin: price}
+
+
+def get_offers(parsed_response):
+    """Returns a dict with a single entry {ASIN: offers}"""
+    try:
+        asin = parsed_response["ASIN"]["value"]
+    except KeyError:
+        return None
+    try:
+        offers_by_condition = parsed_response["Product"]["CompetitivePricing"][
+            "NumberOfOfferListings"
+        ]["OfferListingCount"]
+        offer_count = 0
+        for cur_offer in offers_by_condition:
+            if cur_offer["condition"]["value"] == "New":
+                offer_count = int(cur_offer["value"])
+                break
+    except KeyError:
+        return None
+    return {asin: offer_count}
+
+
+def add_competition_data(batch, marketplace_id=marketplace_id_germany):
+    global last_competitive_pricing_request_time
+
+    asins = [cur_product.asin for cur_product in batch]
+
+    assert len(asins) <= 20  # Maximum of 20 asins is allowed per batch
+
+    def api_request():
+        return products_api.get_competitive_pricing_for_asin(marketplace_id, asins)
+
+    elapsed = time.time() - last_competitive_pricing_request_time
+    if elapsed < 1:
+        time.sleep(1 - elapsed)
+    response = make_api_request(api_request)
+    last_competitive_pricing_request_time = time.time()
+    if not response.response.ok:
+        raise Exception(
+            f"Could not make request to MWS API. "
+            f"Status code: {response.response.status_code}, "
+            f"Reason: {response.response.reason}."
+        )
+
+    response_list = []
+    if isinstance(response.parsed, list):
+        response_list.extend(response.parsed)
+    else:
+        response_list.append(response.parsed)
+
+    price_data = {}
+    offers_data = {}
+    for cur_response in response_list:
+        if not check_status(cur_response):
+            continue
+        cur_price_data = get_price(cur_response)
+        if cur_price_data is not None:
+            price_data = {**price_data, **cur_price_data}
+        cur_offers_data = get_offers(cur_response)
+        if cur_offers_data is not None:
+            offers_data = {**offers_data, **cur_offers_data}
+
+    for cur_product in batch:
+        cur_product.price = price_data.get(cur_product.asin)
+        cur_product.offers = offers_data.get(cur_product.asin, 0)

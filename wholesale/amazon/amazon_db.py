@@ -7,6 +7,7 @@ from tqdm import tqdm
 
 def update_products(batch, session):
     amazon_products = amazon_api.get_base_data(batch)
+    amazon_api.add_competition_data(amazon_products)
 
     for cur_product in amazon_products:
         old_product = (
@@ -19,6 +20,7 @@ def update_products(batch, session):
         elif old_product != cur_product:
             old_product.price = cur_product.price
             old_product.fees = cur_product.fees
+            old_product.offers = cur_product.offers
             old_product.category_id = cur_product.category_id
             old_product.sales_rank = cur_product.sales_rank
 
