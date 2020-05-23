@@ -42,13 +42,64 @@ class ProductWholesale(Base):
         return (
             f"ProductWholesale("
             f"id={self.id}, "
-            f"shop_name={self.shop_name}, "
-            f"name={self.name}, ean={self.ean}, "
+            f"shop_name='{self.shop_name}', "
+            f"name='{self.name}, "
+            f"ean={self.ean}', "
             f"price_net={self.price_net}, "
             f"age_restriction={self.age_restriction}, "
             f"timestamp_created={self.timestamp_created}, "
             f"timestamp_updated={self.timestamp_updated}"
             f")"
+        )
+
+
+class ProductAmazon(Base):
+    __tablename__ = "products_amazon"
+
+    id = Column(Integer, primary_key=True)
+    ean = Column(String(length=13), nullable=False)
+    asin = Column(String(length=20), nullable=False)
+    price = Column(Numeric(precision=8, scale=2), nullable=False)
+    fees = Column(Numeric(precision=8, scale=2))
+    category_id = Column(String(length=200))
+    salesrank = Column(Integer)
+    timestamp_created = Column(
+        TIMESTAMP, server_default=func.current_timestamp(), nullable=False
+    )
+    timestamp_updated = Column(
+        TIMESTAMP,
+        server_default=func.current_timestamp(),
+        onupdate=func.current_timestamp(),
+        nullable=False,
+    )
+
+    def __eq__(self, other):
+        if not self.ean == other.ean:
+            return False
+        if not self.asin == other.asin:
+            return False
+        if not self.price == other.price:  # Decimal == check is ok
+            return False
+        if not self.fees == other.fees:
+            return False
+        if not self.category_id == other.category_id:
+            return False
+        if not self.salesrank == other.salesrank:
+            return False
+        return True
+
+    def __repr__(self):
+        return (
+            f"ProductAmazon("
+            f"id={self.id}, "
+            f"ean='{self.ean}', "
+            f"asin='{self.asin}', "
+            f"price={self.price}, "
+            f"fees={self.fees}, "
+            f"category_id='{self.category_id}', "
+            f"salesrank={self.salesrank}, "
+            f"timestamp_created={self.timestamp_created}, "
+            f"timestamp_updated={self.timestamp_updated}"
         )
 
 
