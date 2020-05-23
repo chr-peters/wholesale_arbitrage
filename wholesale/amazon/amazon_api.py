@@ -233,6 +233,29 @@ def get_lowest_price(parsed_response):
     return {asin: price}
 
 
+def get_fba_offers(parsed_response):
+    try:
+        asin = parsed_response["ASIN"]["value"]
+    except KeyError:
+        return None
+    try:
+        lowest_offer = parsed_response["Product"]["LowestOfferListings"][
+            "LowestOfferListing"
+        ]
+        lowest_offer_list = []
+        if isinstance(lowest_offer, list):
+            lowest_offer_list.extend(lowest_offer)
+        else:
+            lowest_offer_list.append(lowest_offer)
+        fba_count = 0
+        for cur_offer in lowest_offer_list:
+            if cur_offer["Qualifiers"]["FulfillmentChannel"]["value"] == "Amazon":
+                fba_count = fba_count + 1
+    except (KeyError, IndexError):
+        return None
+    return {asin: fba_count}
+
+
 def add_competition_details(batch, marketplace_id=marketplace_id_germany):
     global last_lowest_offer_listings_request_time
 
@@ -264,14 +287,19 @@ def add_competition_details(batch, marketplace_id=marketplace_id_germany):
         response_list.append(response.parsed)
 
     low_price_data = {}
+    fba_offer_data = {}
     for cur_response in response_list:
         lowest_price = get_lowest_price(cur_response)
         if lowest_price is not None:
             low_price_data = {**low_price_data, **lowest_price}
+        fba_offers = get_fba_offers(cur_response)
+        if fba_offers is not None:
+            fba_offer_data = {**fba_offer_data, **fba_offers}
 
     for cur_product in batch:
         if not cur_product.has_buy_box:
             cur_product.price = low_price_data.get(cur_product.asin, 0)
+        cur_product.fba_offers = fba_offer_data.get(cur_product.asin, 0)
 
 
 def add_competition_data(batch, marketplace_id=marketplace_id_germany):
@@ -315,8 +343,10 @@ def add_competition_data(batch, marketplace_id=marketplace_id_germany):
             offers_data = {**offers_data, **cur_offers_data}
 
     for cur_product in batch:
-        cur_product.price = price_data.get(cur_product.asin)
-        if not cur_product.price == 0:
+        cur_product.price = price_data.get(cur_product.asin, 0)
+        if cur_product.price == 0:
+            cur_product.has_buy_box = False
+        else:
             cur_product.has_buy_box = True
         cur_product.offers = offers_data.get(cur_product.asin, 0)
 
