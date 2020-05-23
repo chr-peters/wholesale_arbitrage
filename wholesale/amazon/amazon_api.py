@@ -17,6 +17,7 @@ marketplace_id_germany = "A1PA6795UKMFR9"
 
 last_matching_product_request_time = 0
 last_competitive_pricing_request_time = 0
+last_lowest_offer_listings_request_time = 0
 
 
 def make_api_request(request, retry_count=5, sleep_time=2):
@@ -206,6 +207,73 @@ def get_offers(parsed_response):
     return {asin: offer_count}
 
 
+def get_lowest_price(parsed_response):
+    """
+    Returns a dict with a single entry {ASIN: price}. This is not necessarily the
+    buy box price. It can be used when there is no buybox.
+    """
+    try:
+        asin = parsed_response["ASIN"]["value"]
+    except KeyError:
+        return None
+    try:
+        lowest_offer = parsed_response["Product"]["LowestOfferListings"][
+            "LowestOfferListing"
+        ]
+        if isinstance(lowest_offer, list):
+            lowest_offer = lowest_offer[0]
+        listing_price = Decimal(
+            lowest_offer["Price"]["ListingPrice"]["Amount"]["value"]
+        )
+        shipping = Decimal(lowest_offer["Price"]["Shipping"]["Amount"]["value"])
+        price = listing_price + shipping
+    except (KeyError, IndexError):
+        return None
+
+    return {asin: price}
+
+
+def add_competition_details(batch, marketplace_id=marketplace_id_germany):
+    global last_lowest_offer_listings_request_time
+
+    asins = [cur_product.asin for cur_product in batch]
+
+    assert len(asins) <= 20  # Maximum of 20 asins is allowed per batch
+
+    def api_request():
+        return products_api.get_lowest_offer_listings_for_asin(
+            marketplace_id, asins=asins, condition="New"
+        )
+
+    elapsed = time.time() - last_lowest_offer_listings_request_time
+    if elapsed < 1:
+        time.sleep(1 - elapsed)
+    response = make_api_request(api_request)
+    last_lowest_offer_listings_request_time = time.time()
+    if not response.response.ok:
+        raise Exception(
+            f"Could not make request to MWS API. "
+            f"Status code: {response.response.status_code}, "
+            f"Reason: {response.response.reason}."
+        )
+
+    response_list = []
+    if isinstance(response.parsed, list):
+        response_list.extend(response.parsed)
+    else:
+        response_list.append(response.parsed)
+
+    low_price_data = {}
+    for cur_response in response_list:
+        lowest_price = get_lowest_price(cur_response)
+        if lowest_price is not None:
+            low_price_data = {**low_price_data, **lowest_price}
+
+    for cur_product in batch:
+        if not cur_product.has_buy_box:
+            cur_product.price = low_price_data.get(cur_product.asin, 0)
+
+
 def add_competition_data(batch, marketplace_id=marketplace_id_germany):
     global last_competitive_pricing_request_time
 
@@ -248,4 +316,8 @@ def add_competition_data(batch, marketplace_id=marketplace_id_germany):
 
     for cur_product in batch:
         cur_product.price = price_data.get(cur_product.asin)
+        if not cur_product.price == 0:
+            cur_product.has_buy_box = True
         cur_product.offers = offers_data.get(cur_product.asin, 0)
+
+    add_competition_details(batch, marketplace_id)

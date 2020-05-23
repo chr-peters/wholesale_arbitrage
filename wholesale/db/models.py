@@ -1,5 +1,5 @@
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column, Integer, String, Numeric, TIMESTAMP
+from sqlalchemy import Column, Integer, String, Numeric, TIMESTAMP, Boolean
 from sqlalchemy.sql import func
 from wholesale.db import engine
 
@@ -61,7 +61,9 @@ class ProductAmazon(Base):
     asin = Column(String(length=20), nullable=False)
     price = Column(Numeric(precision=8, scale=2))
     fees = Column(Numeric(precision=8, scale=2))
+    fba_offers = Column(Integer)
     offers = Column(Integer)
+    has_buy_box = Column(Boolean, default=False)
     category_id = Column(String(length=200))
     sales_rank = Column(Integer)
     timestamp_created = Column(
@@ -83,7 +85,11 @@ class ProductAmazon(Base):
             return False
         if not self.fees == other.fees:
             return False
+        if not self.fba_offers == other.fba_offers:
+            return False
         if not self.offers == other.offers:
+            return False
+        if not self.has_buy_box == other.has_buy_box:
             return False
         if not self.category_id == other.category_id:
             return False
@@ -99,10 +105,13 @@ class ProductAmazon(Base):
             f"asin='{self.asin}', "
             f"price={self.price}, "
             f"fees={self.fees}, "
+            f"fba_offers={self.fba_offers}, ",
+            f"offers={self.offers}, ",
+            f"has_buy_box={self.has_buy_box}, ",
             f"category_id='{self.category_id}', "
             f"salesrank={self.sales_rank}, "
             f"timestamp_created={self.timestamp_created}, "
-            f"timestamp_updated={self.timestamp_updated})"
+            f"timestamp_updated={self.timestamp_updated})",
         )
 
 
