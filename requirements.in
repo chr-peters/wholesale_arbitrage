@@ -5,3 +5,4 @@ fake-useragent==0.1.11
 beautifulsoup4==4.9.0
 tqdm==4.46.0
 mws==0.8.9
+lxml==4.5.1

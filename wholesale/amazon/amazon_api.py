@@ -3,6 +3,7 @@ import logging
 import time
 from wholesale import settings
 from wholesale.db.models import ProductAmazon
+from wholesale.amazon.fees_api import FeesAPI
 from decimal import Decimal
 
 products_api = mws.Products(
@@ -13,11 +14,19 @@ products_api = mws.Products(
     auth_token=settings.AMAZON_MWS["MWS_AUTH_TOKEN"],
 )
 
+fees_api = FeesAPI(
+    settings.AMAZON_MWS["AWS_ACCESS_KEY_ID"],
+    settings.AMAZON_MWS["SECRET_KEY"],
+    settings.AMAZON_MWS["SELLER_ID"],
+    settings.AMAZON_MWS["MWS_AUTH_TOKEN"],
+)
+
 marketplace_id_germany = "A1PA6795UKMFR9"
 
 last_matching_product_request_time = 0
 last_competitive_pricing_request_time = 0
 last_lowest_offer_listings_request_time = 0
+last_fees_estimate_request_time = 0
 
 
 def make_api_request(request, retry_count=5, sleep_time=2):
@@ -46,6 +55,7 @@ def make_api_request(request, retry_count=5, sleep_time=2):
 def check_status(parsed_response):
     if parsed_response["status"]["value"] == "Success":
         return True
+    logging.error("API request not successful:")
     logging.error(parsed_response["Error"]["Message"]["value"])
     return False
 
@@ -80,11 +90,14 @@ def parse_sales_rank(response_product):
 
 
 def is_bundle(response_product):
-    if (
-        response_product["AttributeSets"]["ItemAttributes"]["Binding"]["value"]
-        == "Product Bundle"
-    ):
-        return True
+    try:
+        if (
+            response_product["AttributeSets"]["ItemAttributes"]["Binding"]["value"]
+            == "Product Bundle"
+        ):
+            return True
+    except KeyError:
+        pass
     return False
 
 
@@ -126,6 +139,8 @@ def get_base_data(batch, marketplace_id=marketplace_id_germany):
     and the fees.
     """
     global last_matching_product_request_time
+
+    assert len(batch) <= 5  # maximum of 5 products allowed per batch
 
     ean_codes = [cur_product.ean for cur_product in batch]
 
@@ -259,9 +274,9 @@ def get_fba_offers(parsed_response):
 def add_competition_details(batch, marketplace_id=marketplace_id_germany):
     global last_lowest_offer_listings_request_time
 
-    asins = [cur_product.asin for cur_product in batch]
+    assert len(batch) <= 20  # Maximum of 20 products is allowed per batch
 
-    assert len(asins) <= 20  # Maximum of 20 asins is allowed per batch
+    asins = [cur_product.asin for cur_product in batch]
 
     def api_request():
         return products_api.get_lowest_offer_listings_for_asin(
@@ -305,9 +320,9 @@ def add_competition_details(batch, marketplace_id=marketplace_id_germany):
 def add_competition_data(batch, marketplace_id=marketplace_id_germany):
     global last_competitive_pricing_request_time
 
-    asins = [cur_product.asin for cur_product in batch]
+    assert len(batch) <= 20  # Maximum of 20 products is allowed per batch
 
-    assert len(asins) <= 20  # Maximum of 20 asins is allowed per batch
+    asins = [cur_product.asin for cur_product in batch]
 
     def api_request():
         return products_api.get_competitive_pricing_for_asin(marketplace_id, asins)
@@ -351,3 +366,21 @@ def add_competition_data(batch, marketplace_id=marketplace_id_germany):
         cur_product.offers = offers_data.get(cur_product.asin, 0)
 
     add_competition_details(batch, marketplace_id)
+
+
+def add_fees(batch, marketplace_id=marketplace_id_germany):
+    global last_fees_estimate_request_time
+
+    assert len(batch) <= 20  # Maximum of 20 products is allowed per batch
+
+    def api_request():
+        return fees_api.get_my_fees_estimate(marketplace_id, batch)
+
+    elapsed = time.time() - last_fees_estimate_request_time
+    if elapsed < 1:
+        time.sleep(1 - elapsed)
+    response = make_api_request(api_request)
+    last_fees_estimate_request_time = time.time()
+
+    for cur_product in batch:
+        cur_product.fees = response.get(cur_product.asin)
