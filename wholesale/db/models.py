@@ -26,7 +26,7 @@ class ProductWholesale(Base):
     )
 
     def __eq__(self, other):
-        if not self.shopname == other.shop_name:
+        if not self.shop_name == other.shop_name:
             return False
         if not self.name == other.name:
             return False
