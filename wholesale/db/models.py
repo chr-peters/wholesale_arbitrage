@@ -12,7 +12,7 @@ class ProductWholesale(Base):
     id = Column(Integer, primary_key=True)
     shop_name = Column(String(length=100), nullable=False)
     name = Column(String(length=500), nullable=False)
-    ean = Column(String(length=13), nullable=False)
+    ean = Column(String(length=20), nullable=False)
     price_net = Column(Numeric(precision=8, scale=2), nullable=False)
     age_restriction = Column(Integer, nullable=False, default=0)
     timestamp_created = Column(
@@ -61,7 +61,7 @@ class ProductAmazon(Base):
     __tablename__ = "products_amazon"
 
     id = Column(Integer, primary_key=True)
-    ean = Column(String(length=13), nullable=False)
+    ean = Column(String(length=20), nullable=False)
     asin = Column(String(length=20), nullable=False)
     price = Column(Numeric(precision=8, scale=2))
     fees = Column(Numeric(precision=8, scale=2))

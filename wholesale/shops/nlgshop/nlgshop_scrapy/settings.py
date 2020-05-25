@@ -12,8 +12,8 @@ from fake_useragent import UserAgent
 
 BOT_NAME = "nlgshop_scrapy"
 
-SPIDER_MODULES = ["nlgshop_scrapy.spiders"]
-NEWSPIDER_MODULE = "nlgshop_scrapy.spiders"
+SPIDER_MODULES = ["wholesale.shops.nlgshop.nlgshop_scrapy.spiders"]
+NEWSPIDER_MODULE = "wholesale.shops.nlgshop.nlgshop_scrapy.spiders"
 
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
@@ -23,7 +23,7 @@ USER_AGENT = UserAgent().firefox
 ROBOTSTXT_OBEY = False
 
 # Configure maximum concurrent requests performed by Scrapy (default: 16)
-# CONCURRENT_REQUESTS = 32
+CONCURRENT_REQUESTS = 1
 
 # Configure a delay for requests for the same website (default: 0)
 # See https://docs.scrapy.org/en/latest/topics/settings.html#download-delay
@@ -66,7 +66,7 @@ DOWNLOAD_DELAY = 4
 # Configure item pipelines
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
 ITEM_PIPELINES = {
-    "nlgshop_scrapy.pipelines.NlgDatabasePipeline": 300,
+    "wholesale.shops.nlgshop.nlgshop_scrapy.pipelines.NlgDatabasePipeline": 300,
 }
 
 # Enable and configure the AutoThrottle extension (disabled by default)
@@ -89,3 +89,4 @@ ITEM_PIPELINES = {
 # HTTPCACHE_DIR = 'httpcache'
 # HTTPCACHE_IGNORE_HTTP_CODES = []
 # HTTPCACHE_STORAGE = 'scrapy.extensions.httpcache.FilesystemCacheStorage'
+LOG_LEVEL = "INFO"

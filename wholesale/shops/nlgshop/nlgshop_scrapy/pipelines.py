@@ -15,6 +15,9 @@ class NlgDatabasePipeline(object):
 
     def process_item(self, item, spider):
 
+        if item.ean == "":
+            return item
+
         old_product = (
             self.session.query(ProductWholesale)
             .filter_by(shop_name=item.shop_name, ean=item.ean)
@@ -28,7 +31,7 @@ class NlgDatabasePipeline(object):
             old_product.name = item.name
             old_product.price_net = item.price_net
             old_product.age_restriction = item.age_restriction
-            self.session.commmit()
+            self.session.commit()
 
         return item
 

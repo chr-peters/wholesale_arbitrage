@@ -140,6 +140,7 @@ def get_base_data(batch, marketplace_id=marketplace_id_germany):
     """
     global last_matching_product_request_time
 
+    assert len(batch) > 0
     assert len(batch) <= 5  # maximum of 5 products allowed per batch
 
     ean_codes = [cur_product.ean for cur_product in batch]
@@ -274,6 +275,7 @@ def get_fba_offers(parsed_response):
 def add_competition_details(batch, marketplace_id=marketplace_id_germany):
     global last_lowest_offer_listings_request_time
 
+    assert len(batch) > 0
     assert len(batch) <= 20  # Maximum of 20 products is allowed per batch
 
     asins = [cur_product.asin for cur_product in batch]
@@ -320,6 +322,7 @@ def add_competition_details(batch, marketplace_id=marketplace_id_germany):
 def add_competition_data(batch, marketplace_id=marketplace_id_germany):
     global last_competitive_pricing_request_time
 
+    assert len(batch) > 0
     assert len(batch) <= 20  # Maximum of 20 products is allowed per batch
 
     asins = [cur_product.asin for cur_product in batch]
@@ -371,6 +374,7 @@ def add_competition_data(batch, marketplace_id=marketplace_id_germany):
 def add_fees(batch, marketplace_id=marketplace_id_germany):
     global last_fees_estimate_request_time
 
+    assert len(batch) > 0
     assert len(batch) <= 20  # Maximum of 20 products is allowed per batch
 
     def api_request():

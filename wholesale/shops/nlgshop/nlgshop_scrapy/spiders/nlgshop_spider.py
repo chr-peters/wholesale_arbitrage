@@ -13,16 +13,14 @@ class NlgshopSpider(scrapy.Spider):
 
     max_pages = 999  # maximum pages per category to scrape products from
 
-    category_urls = [
-        # "https://nlgshop.de/factfinder/Search.ff?query=*&channel=nlgshop_de&navigation=true&filterCategoryPathROOT=Esoterik+Gro%C3%9Fhandel&sortSort=desc&format=json",
-        # "https://nlgshop.de/factfinder/Search.ff?query=*&channel=nlgshop_de&navigation=true&filterCategoryPathROOT=Geschenkartikelgro%C3%9Fhandel&sortSort=desc&format=json",
-        # "https://nlgshop.de/factfinder/Search.ff?query=*&channel=nlgshop_de&navigation=true&filterCategoryPathROOT=Haus+%26+Garten&sortSort=desc&format=json",
-        # "https://nlgshop.de/factfinder/Search.ff?query=*&channel=nlgshop_de&navigation=true&filterCategoryPathROOT=Mineralien+Gro%C3%9Fhandel&sortSort=desc&format=json",
-        # "https://nlgshop.de/factfinder/Search.ff?query=*&channel=nlgshop_de&navigation=true&filterCategoryPathROOT=Neue+Medien&sortSort=desc&format=json",
-        # "https://nlgshop.de/factfinder/Search.ff?query=*&channel=nlgshop_de&navigation=true&filterCategoryPathROOT=Schmuck&sortSort=desc&format=json",
-        # "https://nlgshop.de/factfinder/Search.ff?query=*&channel=nlgshop_de&navigation=true&filterCategoryPathROOT=Spirituelle+Kunst&sortSort=desc&format=json",
-        "https://nlgshop.de/factfinder/Search.ff?query=*&channel=nlgshop_de&navigation=true&filterCategoryPathROOT=R%C3%A4ucherwerk+Gro%C3%9Fhandel&sortSort=desc&format=json",
-    ]
+    category_urls = {
+        "Esoterik": "https://nlgshop.de/factfinder/Search.ff?query=*&channel=nlgshop_de&navigation=true&filterCategoryPathROOT=Esoterik+Gro%C3%9Fhandel&sortSort=desc&format=json",
+        "Geschenkartikel": "https://nlgshop.de/factfinder/Search.ff?query=*&channel=nlgshop_de&navigation=true&filterCategoryPathROOT=Geschenkartikelgro%C3%9Fhandel&sortSort=desc&format=json",
+        "Haus und Garten": "https://nlgshop.de/factfinder/Search.ff?query=*&channel=nlgshop_de&navigation=true&filterCategoryPathROOT=Haus+%26+Garten&sortSort=desc&format=json",
+        "Schmuck": "https://nlgshop.de/factfinder/Search.ff?query=*&channel=nlgshop_de&navigation=true&filterCategoryPathROOT=Schmuck&sortSort=desc&format=json",
+        "Spirituelle Kunst": "https://nlgshop.de/factfinder/Search.ff?query=*&channel=nlgshop_de&navigation=true&filterCategoryPathROOT=Spirituelle+Kunst&sortSort=desc&format=json",
+        "Raeucherwerk": "https://nlgshop.de/factfinder/Search.ff?query=*&channel=nlgshop_de&navigation=true&filterCategoryPathROOT=R%C3%A4ucherwerk+Gro%C3%9Fhandel&sortSort=desc&format=json",
+    }
 
     def start_requests(self):
         yield scrapy.Request(url="https://nlgshop.de/account", callback=self.login)
@@ -43,7 +41,7 @@ class NlgshopSpider(scrapy.Spider):
             raise CloseSpider("Authentication failed.")
 
         # Login successful! Now start scraping with an authenticated session.
-        for url in self.category_urls:
+        for url in self.category_urls.values():
             yield scrapy.Request(url=url, callback=self.parse)
 
     # default function to parse a category

@@ -16,6 +16,9 @@ class FeesAPI:
         self.mws_auth_token = mws_auth_token
 
     def get_my_fees_estimate(self, marketplace_id, products):
+        assert len(products) > 0
+        assert len(products) <= 20
+
         # this is the basic information that has to be sent with every request
         data_unsorted = {
             "Action": "GetMyFeesEstimate",

@@ -7,8 +7,19 @@ from tqdm import tqdm
 
 def update_products(batch, session):
     amazon_products = amazon_api.get_base_data(batch)
-    amazon_api.add_competition_data(amazon_products)
-    amazon_api.add_fees(amazon_products)
+
+    batch_size = 20
+    cur_batch = []
+    for cur_product in amazon_products:
+        if len(cur_batch) < batch_size:
+            cur_batch.append(cur_product)
+        else:
+            amazon_api.add_competition_data(cur_batch)
+            amazon_api.add_fees(cur_batch)
+            cur_batch = [cur_product]
+    if len(cur_batch) > 0:
+        amazon_api.add_competition_data(cur_batch)
+        amazon_api.add_fees(cur_batch)
 
     for cur_product in amazon_products:
         old_product = (
