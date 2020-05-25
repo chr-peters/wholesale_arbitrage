@@ -43,14 +43,18 @@ class ProductWholesale(Base):
             f"ProductWholesale("
             f"id={self.id}, "
             f"shop_name='{self.shop_name}', "
-            f"name='{self.name}, "
-            f"ean={self.ean}', "
+            f"name='{self.name}', "
+            f"ean='{self.ean}', "
             f"price_net={self.price_net}, "
             f"age_restriction={self.age_restriction}, "
             f"timestamp_created={self.timestamp_created}, "
             f"timestamp_updated={self.timestamp_updated}"
             f")"
         )
+
+
+class ProductWholesaleItem(ProductWholesale, dict):
+    """This is to be used in conjunction with scrapy."""
 
 
 class ProductAmazon(Base):

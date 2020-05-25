@@ -8,3 +8,4 @@ mws==0.8.9
 lxml==4.5.1
 pandas==1.0.3
 dtale==1.8.13
+scrapy==2.1.0
