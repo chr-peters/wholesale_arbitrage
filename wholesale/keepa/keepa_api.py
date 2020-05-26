@@ -5,6 +5,7 @@ import json
 import time
 import math
 import logging
+from wholesale.utils import retry_request
 
 
 class KeepaAPI:
@@ -46,7 +47,10 @@ class KeepaAPI:
         if self.tokens_left < min_tokens:
             self.wait_for_refill(min_tokens)
 
-        response = requests.get(endpoint, params=params)
+        def request():
+            return requests.get(endpoint, params=params)
+
+        response = retry_request(request)
         self.last_request_time = time.time()
 
         if not response.ok:
@@ -100,10 +104,11 @@ class KeepaAPI:
 
 
 instance = KeepaAPI(settings.KEEPA_ACCESS_KEY)
+get_rating_and_sales_info = instance.get_rating_and_sales_info
 
 
 if __name__ == "__main__":
-    print(instance.get_rating_and_sales_info("B07Y1YMFKP"))
-    print(instance.get_rating_and_sales_info("B0065ILAMI"))
-    print(instance.get_rating_and_sales_info("B002W131GU"))
-    print(instance.get_rating_and_sales_info("B002W131AAdf"))
+    print(get_rating_and_sales_info("B07Y1YMFKP"))
+    print(get_rating_and_sales_info("B0065ILAMI"))
+    print(get_rating_and_sales_info("B002W131GU"))
+    print(get_rating_and_sales_info("B002W131AAdf"))
