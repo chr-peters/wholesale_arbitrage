@@ -68,6 +68,10 @@ class ProductAmazon(Base):
     fba_offers = Column(Integer)
     offers = Column(Integer)
     has_buy_box = Column(Boolean, default=False)
+    review_count = Column(Integer)
+    rating = Column(Numeric(precision=3, scale=2))
+    sales30 = Column(Integer)
+    sales365 = Column(Integer)
     category_id = Column(String(length=200))
     sales_rank = Column(Integer)
     timestamp_created = Column(
@@ -79,6 +83,30 @@ class ProductAmazon(Base):
         onupdate=func.current_timestamp(),
         nullable=False,
     )
+
+    def update(self, other):
+        if other.price is not None:
+            self.price = other.price
+        if other.fees is not None:
+            self.fees = other.fees
+        if other.fba_offers is not None:
+            self.fba_offers = other.fba_offers
+        if other.offers is not None:
+            self.offers = other.offers
+        if other.has_buy_box is not None:
+            self.has_buy_box = other.has_buy_box
+        if other.review_count is not None:
+            self.review_count = other.review_count
+        if other.rating is not None:
+            self.rating = other.rating
+        if other.sales30 is not None:
+            self.sales30 = other.sales30
+        if other.sales365 is not None:
+            self.sales365 = other.sales365
+        if other.category_id is not None:
+            self.category_id = other.category_id
+        if other.sales_rank is not None:
+            self.sales_rank = other.sales_rank
 
     def __eq__(self, other):
         if not self.ean == other.ean:
@@ -94,6 +122,14 @@ class ProductAmazon(Base):
         if not self.offers == other.offers:
             return False
         if not self.has_buy_box == other.has_buy_box:
+            return False
+        if not self.review_count == other.review_count:
+            return False
+        if not self.rating == other.rating:
+            return False
+        if not self.sales30 == other.sales30:
+            return False
+        if not self.sales365 == other.sales365:
             return False
         if not self.category_id == other.category_id:
             return False

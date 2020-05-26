@@ -1,0 +1,1 @@
+from wholesale.keepa.keepa_api import get_rating_and_sales_info

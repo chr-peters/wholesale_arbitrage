@@ -30,13 +30,7 @@ def update_products(batch, session):
         if old_product is None:
             session.add(cur_product)
         elif old_product != cur_product:
-            old_product.price = cur_product.price
-            old_product.fees = cur_product.fees
-            old_product.fba_offers = cur_product.fba_offers
-            old_product.offers = cur_product.offers
-            old_product.has_buy_box = cur_product.has_buy_box
-            old_product.category_id = cur_product.category_id
-            old_product.sales_rank = cur_product.sales_rank
+            old_product.update(cur_product)
 
     session.commit()
 

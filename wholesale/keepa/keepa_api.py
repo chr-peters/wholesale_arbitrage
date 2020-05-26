@@ -66,6 +66,7 @@ class KeepaAPI:
         self.tokens_left = response_dict["tokensLeft"]
         self.refill_in_seconds = response_dict["refillIn"] / 1000
         self.refill_rate = response_dict["refillRate"]
+
         return response_dict
 
     def get_rating_and_sales_info(self, asin, domain_id=3):
