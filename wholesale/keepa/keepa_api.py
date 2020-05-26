@@ -35,11 +35,12 @@ class KeepaAPI:
         refills_needed = math.ceil(
             (tokens_needed - self.tokens_left) / self.refill_rate
         )
-        sleep_time = (
+        sleep_time = max(
             self.refill_in_seconds
             + self.last_request_time
             - time.time()
-            + (refills_needed - 1) * 60
+            + (refills_needed - 1) * 60,
+            0,
         )
         time.sleep(sleep_time)
 
@@ -103,8 +104,8 @@ class KeepaAPI:
         return result
 
 
-instance = KeepaAPI(settings.KEEPA_ACCESS_KEY)
-get_rating_and_sales_info = instance.get_rating_and_sales_info
+_instance = KeepaAPI(settings.KEEPA_ACCESS_KEY)
+get_rating_and_sales_info = _instance.get_rating_and_sales_info
 
 
 if __name__ == "__main__":
