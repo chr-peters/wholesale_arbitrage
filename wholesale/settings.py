@@ -24,3 +24,5 @@ NLG_SHOP = {
     "USER": os.environ["WHOLESALE_NLG_SHOP_USER"],
     "PASSWORD": os.environ["WHOLESALE_NLG_SHOP_PASSWORD"],
 }
+
+KEEPA_ACCESS_KEY = os.environ["KEEPA_ACCESS_KEY"]

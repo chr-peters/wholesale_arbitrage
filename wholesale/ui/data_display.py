@@ -1,4 +1,4 @@
-from wholesale.ui import data_loader
+from wholesale.db import data_loader
 import dtale
 
 
