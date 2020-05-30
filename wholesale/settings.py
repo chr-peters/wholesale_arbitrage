@@ -25,4 +25,9 @@ NLG_SHOP = {
     "PASSWORD": os.environ["WHOLESALE_NLG_SHOP_PASSWORD"],
 }
 
+VITREX = {
+    "USER": os.environ["WHOLESALE_VITREX_USER"],
+    "PASSWORD": os.environ["WHOLESALE_VITREX_PASSWORD"],
+}
+
 KEEPA_ACCESS_KEY = os.environ["KEEPA_ACCESS_KEY"]

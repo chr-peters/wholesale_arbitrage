@@ -1,6 +1,7 @@
 from wholesale import keepa
 from wholesale.db import Session
 from wholesale.db.models import ProductAmazon
+from wholesale.db.data_loader import get_data
 from sqlalchemy import func, asc
 from tqdm import tqdm
 
@@ -37,5 +38,20 @@ def update_no_offer_products():
     session.close()
 
 
+def update_profitable_products():
+    data = get_data()
+    profitable = data[data["profit"] > 0]
+    profitable_ean_list = profitable["ean"]
+
+    session = Session()
+    query = session.query(ProductAmazon).filter(
+        ProductAmazon.ean.in_(profitable_ean_list)
+    )
+    for cur_product in tqdm(query, total=query.count()):
+        update_rating_and_sales_info(cur_product, session)
+    session.close()
+
+
 if __name__ == "__main__":
-    update_no_offer_products()
+    # update_no_offer_products()
+    update_profitable_products()
