@@ -27,7 +27,7 @@ def update_vitrex():
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
-    # update_gross_electronic()
+    update_gross_electronic()
     # update_nlgshop()
-    update_vitrex()
-    # data_display.display_data()
+    # update_vitrex()
+    data_display.display_data()

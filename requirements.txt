@@ -64,6 +64,7 @@ twisted==20.3.0           # via scrapy
 urllib3==1.25.9           # via requests
 w3lib==1.22.0             # via parsel, scrapy
 werkzeug==1.0.1           # via flask
+xlrd==1.2.0               # via -r requirements.in
 zope.interface==5.1.0     # via scrapy, twisted
 
 # The following packages are considered to be unsafe in a requirements file:
