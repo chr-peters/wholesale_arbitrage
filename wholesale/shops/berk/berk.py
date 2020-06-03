@@ -2,6 +2,11 @@ from pathlib import PurePath
 import pandas as pd
 import requests
 from io import StringIO
+from wholesale.db.models import ProductWholesale
+from wholesale.db import Session
+from tqdm import tqdm
+import math
+from decimal import Decimal
 
 shop_name = "berk.de"
 
@@ -53,5 +58,37 @@ def get_product_dataframe():
     return df
 
 
+def parse_product_dataframe(df):
+    for cur_row in df.itertuples():
+        if not math.isnan(cur_row.Bestand) and math.isclose(cur_row.Bestand, 0):
+            continue
+        yield ProductWholesale(
+            shop_name=shop_name,
+            name=cur_row.Bezeichnung1,
+            ean=cur_row.EANNummer,
+            price_net=Decimal(cur_row.Preis),
+            age_restriction=0,
+        )
+
+
 def update_database():
-    pass
+    df = get_product_dataframe()
+    total = sum([1 for cur_product in parse_product_dataframe(df)])
+    session = Session()
+    for cur_product in tqdm(parse_product_dataframe(df), total=total):
+        old_product = (
+            session.query(ProductWholesale)
+            .filter_by(shop_name=shop_name, ean=cur_product.ean)
+            .first()
+        )
+        if old_product is None:
+            session.add(cur_product)
+        elif cur_product != old_product:
+            old_product.name = cur_product.name
+            old_product.price_net = cur_product.price_net
+    session.commit()
+    session.close()
+
+
+if __name__ == "__main__":
+    update_database()

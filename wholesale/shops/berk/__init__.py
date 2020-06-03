@@ -1,1 +1,1 @@
-from wholesale.shops.berk.db_updater import shop_name, update_database
+from wholesale.shops.berk.berk import shop_name, update_database

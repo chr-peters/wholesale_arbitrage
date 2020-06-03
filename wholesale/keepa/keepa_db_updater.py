@@ -2,7 +2,7 @@ from wholesale import keepa
 from wholesale.db import Session
 from wholesale.db.models import ProductAmazon
 from wholesale.db.data_loader import get_data
-from wholesale.shops import vitrex, gross_electronic
+from wholesale.shops import vitrex, gross_electronic, berk
 from sqlalchemy import func, asc
 from tqdm import tqdm
 
@@ -53,7 +53,26 @@ def update_profitable_products(shop_name):
     session.close()
 
 
+def update_profitable_unupdated_products(shop_name):
+    data = get_data()
+    profitable = data[
+        (data["review_count"].isnull())
+        & (data["profit"] > 0)
+        & (data["shop_name"] == shop_name)
+    ]
+    profitable_ean_list = profitable["ean"]
+
+    session = Session()
+    query = session.query(ProductAmazon).filter(
+        ProductAmazon.ean.in_(profitable_ean_list)
+    )
+    for cur_product in tqdm(query, total=query.count()):
+        update_rating_and_sales_info(cur_product, session)
+    session.close()
+
+
 if __name__ == "__main__":
     # update_no_offer_products()
     # update_profitable_products(vitrex.shop_name)
-    update_profitable_products(gross_electronic.shop_name)
+    # update_profitable_products(gross_electronic.shop_name)
+    update_profitable_unupdated_products(berk.shop_name)
