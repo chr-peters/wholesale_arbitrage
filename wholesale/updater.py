@@ -1,4 +1,4 @@
-from wholesale.shops import gross_electronic, nlgshop, vitrex, berk
+from wholesale.shops import gross_electronic, nlgshop, vitrex, berk, saraswati
 from wholesale.amazon import amazon_db
 from wholesale.ui import data_display
 import logging
@@ -29,6 +29,13 @@ def update_berk():
     berk.update_database()
     logging.info("Updating Amazon db")
     amazon_db.update_database(berk.shop_name)
+    logging.info("Done.")
+
+
+def update_saraswati():
+    saraswati.update_database()
+    logging.info("Updating Amazon db")
+    amazon_db.update_database(saraswati.shop_name)
     logging.info("Done.")
 
 

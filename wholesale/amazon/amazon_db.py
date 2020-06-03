@@ -1,6 +1,7 @@
 from wholesale.db import Session
 from wholesale.db.models import ProductWholesale, ProductAmazon
-from wholesale.shops.gross_electronic import shop_name as gross_electronic_shop_name
+from wholesale.shops import gross_electronic
+from wholesale.shops import saraswati
 from wholesale.amazon import amazon_api
 from tqdm import tqdm
 
@@ -54,4 +55,4 @@ def update_database(shop_name):
 
 
 if __name__ == "__main__":
-    update_database(gross_electronic_shop_name)
+    update_database(saraswati.shop_name)

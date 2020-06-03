@@ -25,6 +25,14 @@ class ProductWholesale(Base):
         nullable=False,
     )
 
+    def update(self, other):
+        if other.name is not None:
+            self.name = other.name
+        if other.price_net is not None:
+            self.price_net = other.price_net
+        if other.age_restriction is not None:
+            self.age_restriction = other.age_restriction
+
     def __eq__(self, other):
         if not self.shop_name == other.shop_name:
             return False

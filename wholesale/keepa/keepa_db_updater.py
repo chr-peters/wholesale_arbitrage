@@ -2,7 +2,7 @@ from wholesale import keepa
 from wholesale.db import Session
 from wholesale.db.models import ProductAmazon
 from wholesale.db.data_loader import get_data
-from wholesale.shops import vitrex, gross_electronic, berk
+from wholesale.shops import vitrex, gross_electronic, berk, saraswati
 from sqlalchemy import func, asc
 from tqdm import tqdm
 
@@ -75,4 +75,4 @@ if __name__ == "__main__":
     # update_no_offer_products()
     # update_profitable_products(vitrex.shop_name)
     # update_profitable_products(gross_electronic.shop_name)
-    update_profitable_unupdated_products(berk.shop_name)
+    update_profitable_unupdated_products(saraswati.shop_name)
