@@ -16,5 +16,6 @@ def update_shop(shop):
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
-    update_shop(gross_electronic)
+    # update_shop(gross_electronic)
+    update_shop(berk)
     data_display.display_data()

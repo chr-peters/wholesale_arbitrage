@@ -3,7 +3,11 @@ from decimal import Decimal
 import hmac
 import base64
 import datetime
+from wholesale import settings
+from wholesale.db import Session
+from wholesale.db.models import ProductAmazon
 from bs4 import BeautifulSoup
+import logging
 
 
 class FeesAPI:
@@ -109,9 +113,31 @@ class FeesAPI:
                 try:
                     cur_asin = cur_result.find("IdValue").string
                     cur_fee = Decimal(
-                        cur_result.find("TotalFeesEstimate").find("Amount").string
+                        cur_result.find("TotalFeesEstimate").Amount.string
                     )
-                    result[cur_asin] = cur_fee
+                    result[cur_asin] = {"total": cur_fee}
+
+                    fba_fees_tag = cur_result.find("FeeType", string="FBAFees")
+                    if fba_fees_tag is None:
+                        continue
+
+                    fba_fee = Decimal(
+                        fba_fees_tag.next_sibling.next_sibling.find(
+                            "FinalFee"
+                        ).Amount.string
+                    )
+                    result[cur_asin]["fba"] = fba_fee
+
+                    closing_fee_tag = cur_result.find(
+                        lambda tag: tag.find(
+                            "FeeType", string="VariableClosingFee", recursive=False
+                        )
+                        is not None
+                    )
+                    if closing_fee_tag is None:
+                        continue
+                    closing_fee = Decimal(closing_fee_tag.FinalFee.Amount.string)
+                    result[cur_asin]["closing"] = closing_fee
                 except:
                     pass
         except Exception as e:
@@ -120,3 +146,49 @@ class FeesAPI:
             raise e
 
         return result
+
+
+if __name__ == "__main__":
+    fees_api = FeesAPI(
+        settings.AMAZON_MWS["AWS_ACCESS_KEY_ID"],
+        settings.AMAZON_MWS["SECRET_KEY"],
+        settings.AMAZON_MWS["SELLER_ID"],
+        settings.AMAZON_MWS["MWS_AUTH_TOKEN"],
+    )
+
+    marketplace_id_germany = "A1PA6795UKMFR9"
+
+    class TestProduct:
+        asin = "B00BIPK4AW"
+        price = Decimal(32.4)
+
+    test_product = TestProduct()
+    result = fees_api.get_my_fees_estimate(marketplace_id_germany, [test_product])
+
+    print(result)
+
+    test_product.asin = "B07YCSBSHX"
+    test_product.price = Decimal(49.99)
+
+    result = fees_api.get_my_fees_estimate(marketplace_id_germany, [test_product])
+
+    print(result)
+
+    test_product.asin = "B001B1F8WW"
+    test_product.price = Decimal(4.31)
+
+    result = fees_api.get_my_fees_estimate(marketplace_id_germany, [test_product])
+
+    print(result)
+
+    session = Session()
+
+    query = session.query(ProductAmazon).filter_by(asin="B001B1F8WW")
+    for cur_product in query:
+        print(cur_product)
+        fees_response = fees_api.get_my_fees_estimate(
+            marketplace_id_germany, [cur_product]
+        )
+        print(fees_response)
+
+    session.close()

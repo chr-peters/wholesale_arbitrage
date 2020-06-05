@@ -1,9 +1,9 @@
 from wholesale.db import Session
 from wholesale.db.models import ProductWholesale, ProductAmazon
-from wholesale.shops import gross_electronic
-from wholesale.shops import saraswati
+from wholesale.shops import gross_electronic, saraswati, berk
 from wholesale.amazon import amazon_api
 from tqdm import tqdm
+import logging
 
 
 def update_products(batch, session):
@@ -55,4 +55,7 @@ def update_database(shop_name):
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.CRITICAL)
     update_database(saraswati.shop_name)
+    update_database(berk.shop_name)
+    update_database(gross_electronic.shop_name)

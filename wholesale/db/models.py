@@ -72,7 +72,9 @@ class ProductAmazon(Base):
     ean = Column(String(length=20), nullable=False)
     asin = Column(String(length=20), nullable=False)
     price = Column(Numeric(precision=8, scale=2))
-    fees = Column(Numeric(precision=8, scale=2))
+    fees_fba = Column(Numeric(precision=8, scale=2))
+    fees_closing = Column(Numeric(precision=8, scale=2))
+    fees_total = Column(Numeric(precision=8, scale=2))
     fba_offers = Column(Integer)
     offers = Column(Integer)
     has_buy_box = Column(Boolean, default=False)
@@ -95,8 +97,12 @@ class ProductAmazon(Base):
     def update(self, other):
         if other.price is not None:
             self.price = other.price
-        if other.fees is not None:
-            self.fees = other.fees
+        if other.fees_fba is not None:
+            self.fees_fba = other.fees_fba
+        if other.fees_closing is not None:
+            self.fees_closing = other.fees_closing
+        if other.fees_total is not None:
+            self.fees_total = other.fees_total
         if other.fba_offers is not None:
             self.fba_offers = other.fba_offers
         if other.offers is not None:
@@ -123,7 +129,11 @@ class ProductAmazon(Base):
             return False
         if not self.price == other.price:  # Decimal == check is ok
             return False
-        if not self.fees == other.fees:
+        if not self.fees_fba == other.fees_fba:
+            return False
+        if not self.fees_closing == other.fees_closing:
+            return False
+        if not self.fees_total == other.fees_total:
             return False
         if not self.fba_offers == other.fba_offers:
             return False
@@ -152,14 +162,16 @@ class ProductAmazon(Base):
             f"ean='{self.ean}', "
             f"asin='{self.asin}', "
             f"price={self.price}, "
-            f"fees={self.fees}, "
-            f"fba_offers={self.fba_offers}, ",
-            f"offers={self.offers}, ",
-            f"has_buy_box={self.has_buy_box}, ",
+            f"fees_fba={self.fees_fba}, "
+            f"fees_closing={self.fees_closing}, "
+            f"fees_total={self.fees_total}, "
+            f"fba_offers={self.fba_offers}, "
+            f"offers={self.offers}, "
+            f"has_buy_box={self.has_buy_box}, "
             f"category_id='{self.category_id}', "
             f"salesrank={self.sales_rank}, "
             f"timestamp_created={self.timestamp_created}, "
-            f"timestamp_updated={self.timestamp_updated})",
+            f"timestamp_updated={self.timestamp_updated})"
         )
 
 

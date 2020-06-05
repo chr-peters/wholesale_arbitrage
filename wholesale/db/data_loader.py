@@ -2,6 +2,11 @@ import pandas as pd
 from wholesale.db import Session
 from wholesale.db.models import ProductAmazon, ProductWholesale
 
+fba_de_fee = 0.5
+adult_check_fee = 5
+default_shipping = 2
+default_percent = 0.15
+
 
 def get_raw_data_from_db():
     session = Session()
@@ -14,7 +19,9 @@ def get_raw_data_from_db():
         ProductAmazon.ean,
         ProductAmazon.asin,
         ProductAmazon.price.label("price_amazon"),
-        ProductAmazon.fees,
+        ProductAmazon.fees_fba.label("fees_fba_net"),
+        ProductAmazon.fees_closing.label("fees_closing_net"),
+        ProductAmazon.fees_total,
         ProductAmazon.fba_offers,
         ProductAmazon.offers,
         ProductAmazon.has_buy_box,
@@ -35,26 +42,28 @@ def get_raw_data_from_db():
 
 
 def estimate_fees(df):
-    fba_de_fee = 0.5
-    adult_check_fee = 5
-    default_shipping = 2
-    default_percent = 0.15
-    df["fees"] = df["fees"].where(
-        ~df["fees"].isna(), df["price_amazon"] * default_percent + default_shipping,
+    df["fees_percentage"] = round(
+        (df["fees_total"] - df["fees_fba_net"] - df["fees_closing_net"])
+        / df["price_amazon"],
+        2,
     )
-    df["fees"] = df["fees"].where(
-        df["age_restriction"] < 18, df["fees"] + adult_check_fee / 1.19
+    df["fees_total"] = df["fees_total"].where(
+        ~df["fees_total"].isna(),
+        df["price_amazon"] * default_percent + default_shipping,
     )
-    df["fees"] = df["fees"] + fba_de_fee
+    df["fees_total"] = df["fees_total"].where(
+        df["age_restriction"] < 18, df["fees_total"] + adult_check_fee / 1.19
+    )
+    df["fees_total"] = df["fees_total"] + fba_de_fee
 
 
 def add_taxes(df):
     df["price_shop"] = df["price_shop"] * 1.19
-    df["fees"] = df["fees"] * 1.19
+    df["fees_total"] = df["fees_total"] * 1.19
 
 
 def add_profit(df):
-    df["profit"] = df["price_amazon"] - df["fees"] - df["price_shop"]
+    df["profit"] = df["price_amazon"] - df["fees_total"] - df["price_shop"]
 
 
 def add_roi(df):
@@ -79,7 +88,10 @@ def clean(df):
             "age_restriction",
             "price_shop",
             "price_amazon",
-            "fees",
+            "fees_percentage",
+            "fees_fba_net",
+            "fees_closing_net",
+            "fees_total",
             "profit",
             "roi",
             "margin",

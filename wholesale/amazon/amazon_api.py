@@ -387,4 +387,8 @@ def add_fees(batch, marketplace_id=marketplace_id_germany):
     last_fees_estimate_request_time = time.time()
 
     for cur_product in batch:
-        cur_product.fees = response.get(cur_product.asin)
+        cur_fee_response = response.get(cur_product.asin)
+        if cur_fee_response is not None:
+            cur_product.fees_fba = cur_fee_response.get("fba")
+            cur_product.fees_closing = cur_fee_response.get("closing")
+            cur_product.fees_total = cur_fee_response.get("total")
