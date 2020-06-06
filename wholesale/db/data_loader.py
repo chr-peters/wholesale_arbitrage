@@ -6,6 +6,7 @@ fba_de_fee = 0.5
 adult_check_fee = 5
 default_shipping = 2
 default_percent = 0.15
+vat_tax = 0.19
 
 
 def get_raw_data_from_db():
@@ -78,6 +79,25 @@ def add_last_updated(df):
     df["last_updated"] = df[["amazon_updated", "wholesale_updated"]].max(axis=1)
 
 
+def add_break_even(df):
+    df["age_fee"] = 0
+    df["age_fee"].where(
+        df["age_restriction"] < 18, adult_check_fee / (1 + vat_tax), inplace=True
+    )
+    df["break_even"] = (
+        (1 + vat_tax)
+        / (1 - df["fees_percentage"] * (1 + vat_tax))
+        * (
+            df["price_shop"] / (1 + vat_tax)
+            + df["fees_closing_net"]
+            + df["fees_fba_net"]
+            + df["age_fee"]
+            + fba_de_fee
+        )
+    )
+    df["safety_percent"] = (df["price_amazon"] - df["break_even"]) / df["price_amazon"]
+
+
 def clean(df):
     df = df[
         [
@@ -88,6 +108,8 @@ def clean(df):
             "age_restriction",
             "price_shop",
             "price_amazon",
+            "break_even",
+            "safety_percent",
             "fees_percentage",
             "fees_fba_net",
             "fees_closing_net",
@@ -118,5 +140,6 @@ def get_data():
     add_roi(data)
     add_margin(data)
     add_last_updated(data)
+    add_break_even(data)
     data = clean(data)
     return data
