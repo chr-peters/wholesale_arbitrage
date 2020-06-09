@@ -9,6 +9,11 @@ def update_shop(shop):
     shop.update_database()
     logging.info("Updating Amazon db")
     amazon_db.update_database(shop.shop_name)
+
+    if shop is vitrex:
+        logging.info("Cleaning up the unavailable profitable products")
+        shop.clean_profitable_products()
+
     logging.info("Updating un-updated profitable products keepa data")
     keepa.update_profitable_unupdated_products(shop.shop_name)
     logging.info("Done.")
@@ -16,6 +21,7 @@ def update_shop(shop):
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
+    update_shop(vitrex)
     # update_shop(gross_electronic)
-    update_shop(berk)
+    # update_shop(berk)
     data_display.display_data()

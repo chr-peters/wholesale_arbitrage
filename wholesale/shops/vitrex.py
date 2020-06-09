@@ -11,12 +11,16 @@ from wholesale.db.models import ProductWholesale
 from wholesale.db import Session
 from decimal import Decimal
 from wholesale import settings
+from wholesale.utils import retry_request
+from wholesale.db import data_loader
 
 
 shop_name = "vitrex.de"
 base_url = "https://www.vitrex-shop.de/"
 login_url = urljoin(base_url, "de/login__10/")
 csv_download_url = urljoin(base_url, "ajax.php?dl_link=1")
+
+last_availability_request_time = 0
 
 
 def get_hidden_login_field_data(login_html):
@@ -44,6 +48,45 @@ def is_login_successful(after_login_html):
     if logout_link is None:
         return False
     return True
+
+
+def is_available(ean):
+    global last_availability_request_time
+
+    params = {"quicksearch": ean, "search_button": 1}
+    headers = {"User-Agent": UserAgent().firefox}
+    url = "https://www.vitrex-shop.de/de/erweiterte-suche__13/"
+
+    time_diff = time.time() - last_availability_request_time
+    if time_diff < 1:
+        time.sleep(1 - time_diff)
+
+    response = requests.get(url, params=params, headers=headers)
+    last_availability_request_time = time.time()
+    response.raise_for_status()
+
+    bs = BeautifulSoup(response.text, "html.parser")
+
+    ean_div = bs.find("div", string=lambda x: x is not None and x.strip() == ean)
+    if ean_div is None:
+        return False
+    stock_span = ean_div.parent.find("span", attrs={"class": "stock"})
+    if stock_span is None:
+        logging.warning(f"No stock information found for EAN {ean}")
+        return False
+    stock_title = stock_span.attrs.get("title")
+    if stock_title is None:
+        logging.warning(f"No stock title found for EAN {ean}")
+        return False
+
+    stock_title = stock_title.strip()
+    if stock_title == "geringer Warenbestand":
+        return True
+    if stock_title == "großer Warenbestand":
+        return True
+    if stock_title == "vorbestellbar":
+        return True
+    return False
 
 
 class Vitrex:
@@ -136,6 +179,9 @@ def parse_csv(csv_file):
     reader = csv.DictReader(csv_file, delimiter=";")
     try:
         for cur_record in reader:
+            if cur_record["EAN"].strip() == "":
+                continue
+
             if cur_record["USK"] == "indiziert" or cur_record["EAN"].strip() == "":
                 continue
             age_restriction = 0
@@ -175,16 +221,35 @@ def update_database():
         )
         if old_product is None:
             session.add(cur_product)
+            session.commit()
         elif cur_product != old_product:
-            old_product.name = cur_product.name
-            old_product.price_net = cur_product.price_net
-            old_product.age_restriction = cur_product.age_restriction
-    session.commit()
+            old_product.update(cur_product)
+            session.commit()
     session.close()
     csv_file.close()
     logging.info("Done.")
 
 
+def clean_profitable_products():
+    df = data_loader.get_data()
+    df = df[(df["shop_name"] == shop_name) & (df["profit"] > 0)]
+    ean_list = df["ean"]
+
+    session = Session()
+    query = session.query(ProductWholesale).filter(ProductWholesale.ean.in_(ean_list))
+    for cur_product in tqdm(query, total=query.count()):
+
+        def availability_check_request():
+            return is_available(cur_product.ean)
+
+        cur_availability = retry_request(availability_check_request)
+        cur_product.is_available = cur_availability
+        session.commit()
+
+    session.close()
+
+
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     update_database()
+    # clean_profitable_products()

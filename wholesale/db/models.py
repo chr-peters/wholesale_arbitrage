@@ -13,6 +13,7 @@ class ProductWholesale(Base):
     shop_name = Column(String(length=100), nullable=False)
     name = Column(String(length=500), nullable=False)
     ean = Column(String(length=20), nullable=False)
+    is_available = Column(Boolean)
     price_net = Column(Numeric(precision=8, scale=2), nullable=False)
     age_restriction = Column(Integer, nullable=False, default=0)
     timestamp_created = Column(
@@ -28,6 +29,8 @@ class ProductWholesale(Base):
     def update(self, other):
         if other.name is not None:
             self.name = other.name
+        if other.is_available is not None:
+            self.is_available = other.is_available
         if other.price_net is not None:
             self.price_net = other.price_net
         if other.age_restriction is not None:
@@ -39,6 +42,8 @@ class ProductWholesale(Base):
         if not self.name == other.name:
             return False
         if not self.ean == other.ean:
+            return False
+        if not self.is_available == other.is_available:
             return False
         if not self.price_net == other.price_net:  # Decimal check is ok
             return False
@@ -53,6 +58,7 @@ class ProductWholesale(Base):
             f"shop_name='{self.shop_name}', "
             f"name='{self.name}', "
             f"ean='{self.ean}', "
+            f"is_available={self.is_available}, "
             f"price_net={self.price_net}, "
             f"age_restriction={self.age_restriction}, "
             f"timestamp_created={self.timestamp_created}, "
