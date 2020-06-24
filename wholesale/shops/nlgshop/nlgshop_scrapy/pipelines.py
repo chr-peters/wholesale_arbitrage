@@ -28,9 +28,7 @@ class NlgDatabasePipeline(object):
             self.session.add(item)
             self.session.commit()
         elif not old_product == item:
-            old_product.name = item.name
-            old_product.price_net = item.price_net
-            old_product.age_restriction = item.age_restriction
+            old_product.update(item)
             self.session.commit()
 
         return item

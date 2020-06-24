@@ -20,6 +20,7 @@ class NlgshopSpider(scrapy.Spider):
         "Schmuck": "https://nlgshop.de/factfinder/Search.ff?query=*&channel=nlgshop_de&navigation=true&filterCategoryPathROOT=Schmuck&sortSort=desc&format=json",
         "Spirituelle Kunst": "https://nlgshop.de/factfinder/Search.ff?query=*&channel=nlgshop_de&navigation=true&filterCategoryPathROOT=Spirituelle+Kunst&sortSort=desc&format=json",
         "Raeucherwerk": "https://nlgshop.de/factfinder/Search.ff?query=*&channel=nlgshop_de&navigation=true&filterCategoryPathROOT=R%C3%A4ucherwerk+Gro%C3%9Fhandel&sortSort=desc&format=json",
+        "Schnaeppchenmarkt": "https://nlgshop.de/factfinder/Search.ff?query=%2a&channel=nlgshop_de&navigation=true&sid=c93hSPu4r9EFRA0PucMJeUf2a4IUdz&filterCategoryPathROOT=Schn%C3%A4ppchenmarkt&sortSort=desc&format=json",
     }
 
     def start_requests(self):
@@ -60,6 +61,7 @@ class NlgshopSpider(scrapy.Spider):
             cur_item.ean = record["ISBN"]
             cur_item.price_net = Decimal(record["Price"])
             cur_item.age_restriction = 0
+            cur_item.is_available = True
 
             yield cur_item
 
