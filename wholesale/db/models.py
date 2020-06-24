@@ -66,6 +66,9 @@ class ProductWholesale(Base):
             f")"
         )
 
+    def __str__(self):
+        return self.__repr__()
+
 
 class ProductWholesaleItem(ProductWholesale, dict):
     """This is to be used in conjunction with scrapy."""
@@ -174,11 +177,18 @@ class ProductAmazon(Base):
             f"fba_offers={self.fba_offers}, "
             f"offers={self.offers}, "
             f"has_buy_box={self.has_buy_box}, "
+            f"review_count={self.review_count}, "
+            f"rating={self.rating}, "
+            f"sales30={self.sales30}, "
+            f"sales365={self.sales365}, "
             f"category_id='{self.category_id}', "
-            f"salesrank={self.sales_rank}, "
+            f"sales_rank={self.sales_rank}, "
             f"timestamp_created={self.timestamp_created}, "
             f"timestamp_updated={self.timestamp_updated})"
         )
+
+    def __str__(self):
+        return self.__repr__()
 
 
 Base.metadata.create_all(engine)
