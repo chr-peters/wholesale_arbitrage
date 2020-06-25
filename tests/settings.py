@@ -1,0 +1,9 @@
+import os
+
+DATABASE_MYSQL_TEST = {
+    "HOST": os.environ["WHOLESALE_MYSQL_TEST_HOST"],
+    "PORT": os.environ["WHOLESALE_MYSQL_TEST_PORT"],
+    "USER": os.environ["WHOLESALE_MYSQL_TEST_USER"],
+    "PASSWORD": os.environ["WHOLESALE_MYSQL_TEST_PASSWORD"],
+    "DBNAME": os.environ["WHOLESALE_MYSQL_TEST_DBNAME"],
+}
