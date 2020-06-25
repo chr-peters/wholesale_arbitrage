@@ -3,10 +3,10 @@ from wholesale.db import Session
 from wholesale.db.models import ProductAmazon, ProductWholesale
 
 fba_de_fee = 0.5
-adult_check_fee = 5
 default_shipping = 2
 default_percent = 0.15
 vat_tax = 0.19
+adult_check_fee = 5 / (1 + vat_tax)
 
 
 def get_raw_data_from_db(session):
@@ -50,7 +50,7 @@ def estimate_fees(df):
         df["price_amazon"] * default_percent + default_shipping,
     )
     df["fees_total"] = df["fees_total"].where(
-        df["age_restriction"] < 18, df["fees_total"] + adult_check_fee / 1.19
+        df["age_restriction"] < 18, df["fees_total"] + adult_check_fee
     )
     df["fees_total"] = df["fees_total"] + fba_de_fee
 
@@ -78,9 +78,7 @@ def add_last_updated(df):
 
 def add_break_even(df):
     df["age_fee"] = 0
-    df["age_fee"].where(
-        df["age_restriction"] < 18, adult_check_fee / (1 + vat_tax), inplace=True
-    )
+    df["age_fee"].where(df["age_restriction"] < 18, adult_check_fee, inplace=True)
     df["break_even"] = (
         (1 + vat_tax)
         / (1 - df["fees_percentage"] * (1 + vat_tax))
@@ -130,11 +128,8 @@ def clean(df):
     return df
 
 
-def get_data():
-    session = Session()
+def get_data(session):
     data = get_raw_data_from_db(session)
-    session.close()
-
     estimate_fees(data)
     add_taxes(data)
     add_profit(data)

@@ -30,8 +30,8 @@ def test_session(test_session_class):
     session = test_session_class()
     yield session
     session.rollback()
-    session.query(models.ProductAmazon).delete()
-    session.query(models.ProductWholesale).delete()
+    session.execute(f"drop table {models.ProductWholesale.__tablename__}")
+    session.execute(f"drop table {models.ProductAmazon.__tablename__}")
     session.commit()
     session.close()
 
@@ -113,3 +113,82 @@ def test_get_raw_data_single_row(test_session):
     assert row["sales365"] == dummy_amazon.sales365
     assert row["category_id"] == dummy_amazon.category_id
     assert row["sales_rank"] == dummy_amazon.sales_rank
+
+
+def test_calculations(test_session):
+    dummy_wholesale = models.ProductWholesale(
+        shop_name="dummy_shop",
+        name="dummy_product",
+        ean="abc",
+        is_available=True,
+        price_net=10,
+        age_restriction=18,
+    )
+    dummy_amazon = models.ProductAmazon(
+        ean="abc",
+        asin="abc123",
+        price=30,
+        fees_fba=1,
+        fees_closing=1,
+        fees_total=6.5,
+        fba_offers=1,
+        offers=2,
+        has_buy_box=True,
+        review_count=10,
+        rating=5,
+        sales30=10,
+        sales365=120,
+        category_id="dummy_category",
+        sales_rank=1000,
+    )
+
+    test_session.add(dummy_wholesale)
+    test_session.add(dummy_amazon)
+    test_session.commit()
+
+    df = data_loader.get_data(test_session)
+    row = df.iloc[0]
+
+    assert row["shop_name"] == "dummy_shop"
+    assert row["name"] == "dummy_product"
+    assert row["ean"] == "abc"
+    assert row["asin"] == "abc123"
+    assert row["is_available"] == True
+    assert row["age_restriction"] == 18
+    assert row["price_shop"] == 10 * (1 + data_loader.vat_tax)
+    assert row["price_amazon"] == 30
+    break_even = (
+        (1 + data_loader.vat_tax)
+        / (1 - 0.15 * (1 + data_loader.vat_tax))
+        * (10 + 1 + 1 + data_loader.fba_de_fee + data_loader.adult_check_fee)
+    )
+    assert row["break_even"] == break_even
+    assert round(row["safety_percent"], 6) == round(1 - break_even / 30, 6)
+    profit = (
+        30
+        - 30 * 0.15 * (1 + data_loader.vat_tax)
+        - 1 * (1 + data_loader.vat_tax)
+        - 1 * (1 + data_loader.vat_tax)
+        - data_loader.fba_de_fee * (1 + data_loader.vat_tax)
+        - data_loader.adult_check_fee * (1 + data_loader.vat_tax)
+        - 10 * (1 + data_loader.vat_tax)
+    )
+    assert round(row["profit"], 6) == round(profit, 6)
+    assert round(row["roi"], 6) == round(profit / (10 * (1 + data_loader.vat_tax)), 6)
+    assert round(row["margin"], 6) == round(profit / 30, 6)
+    assert row["sales30"] == 10
+    assert row["sales365"] == 120
+    assert row["offers"] == 2
+    assert row["fba_offers"] == 1
+    assert row["has_buy_box"] == True
+    assert row["review_count"] == 10
+    assert row["rating"] == 5
+    assert row["fees_percentage"] == 0.15
+    assert row["fees_fba_net"] == 1
+    assert row["fees_closing_net"] == 1
+    fees_total = (
+        30 * 0.15 + 1 + 1 + data_loader.adult_check_fee + data_loader.fba_de_fee
+    ) * (1 + data_loader.vat_tax)
+    assert round(row["fees_total"], 6) == round(fees_total, 6)
+    assert row["sales_rank"] == 1000
+    assert row["category_id"] == "dummy_category"
