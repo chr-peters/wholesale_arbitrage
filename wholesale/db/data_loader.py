@@ -9,9 +9,7 @@ default_percent = 0.15
 vat_tax = 0.19
 
 
-def get_raw_data_from_db():
-    session = Session()
-
+def get_raw_data_from_db(session):
     query = session.query(
         ProductWholesale.shop_name,
         ProductWholesale.name,
@@ -37,8 +35,6 @@ def get_raw_data_from_db():
         ProductWholesale.timestamp_updated.label("wholesale_updated"),
     ).join(ProductAmazon, ProductWholesale.ean == ProductAmazon.ean)
     df = pd.read_sql(query.statement, query.session.bind)
-
-    session.close()
 
     return df
 
@@ -135,7 +131,10 @@ def clean(df):
 
 
 def get_data():
-    data = get_raw_data_from_db()
+    session = Session()
+    data = get_raw_data_from_db(session)
+    session.close()
+
     estimate_fees(data)
     add_taxes(data)
     add_profit(data)
